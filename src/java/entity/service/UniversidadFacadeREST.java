@@ -22,6 +22,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import DAO.UniversidadDAO;
+import java.sql.SQLException;
 
 /**
  *
@@ -33,9 +35,10 @@ public class UniversidadFacadeREST extends AbstractFacade<Universidad> {
 
     @PersistenceContext(unitName = "webServicesPU")
     private EntityManager em;
-
+    private Gson gson;
     public UniversidadFacadeREST() {
         super(Universidad.class);
+        gson = new Gson();
     }
 
     @POST
@@ -43,6 +46,16 @@ public class UniversidadFacadeREST extends AbstractFacade<Universidad> {
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public void create(Universidad entity) {
         super.create(entity);
+    }
+    
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("RegistrarUniversidad")
+    public int añadirUniversidad(String json) throws SQLException
+    {
+        UniversidadDAO uDao = new UniversidadDAO();
+        Universidad universidad = gson.fromJson(json,Universidad.class);
+        return uDao.AñadirUniversidad(universidad);
     }
 
     @PUT
@@ -59,12 +72,14 @@ public class UniversidadFacadeREST extends AbstractFacade<Universidad> {
     }
 
     @GET
-    @Path("{id}")
+    @Path("/Universidad/{id}")
     @Produces({MediaType.APPLICATION_JSON})
     public String find(@PathParam("id") Integer id) {
         Universidad universidad = super.find(id);
-        Gson gson = new Gson();
-        return  gson.toJson(universidad);
+        Universidad result = new Universidad();
+        result.setIdUniversidad(universidad.getIdUniversidad());
+        result.setNombreUniversidad(universidad.getNombreUniversidad());
+        return  gson.toJson(result);
     }
 
     @GET
@@ -76,10 +91,11 @@ public class UniversidadFacadeREST extends AbstractFacade<Universidad> {
     
     @GET
     @Produces({MediaType.APPLICATION_JSON})
-    @Path("BuscarTodos")
-    public String BuscarTodos() {
-        Gson gson = new Gson();
-        List<Universidad> lstUniversidad = super.findAll();
+    @Path("Universidad/Listar")
+    public String BuscarTodos() throws SQLException {
+        
+        UniversidadDAO uDAO = new UniversidadDAO();
+        List<Universidad> lstUniversidad = uDAO.ListarUniversidades();  //super.findAll();
         String result = gson.toJson(lstUniversidad);
         return result;
 //        GenericEntity<List<Universidad>> genericEntity = new GenericEntity<List<Universidad>>(lstUniversidad){};
